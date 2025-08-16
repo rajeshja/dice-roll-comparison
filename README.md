@@ -1,5 +1,5 @@
-# Firebase Studio
+# Dice Roll Comparison
 
-This is a NextJS starter in Firebase Studio.
+Do you play TTRPGs? Are you a Game Master? Do you want to know how different dice rolls compare to each other? Like, which is better - 4D8 or 8D4? Or maybe you rolled a critical success, and want to know the difference between rolling 3D6 and doubling it, or rolling 6D6. 
 
-To get started, take a look at src/app/page.tsx.
+Just enter the rolls, and see.
