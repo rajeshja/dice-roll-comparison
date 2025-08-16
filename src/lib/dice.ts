@@ -12,6 +12,7 @@ export interface ParsedRoll {
 
 export function parseRoll(definition: string): ParsedRoll {
     const cleanedDef = definition.toLowerCase().trim();
+    // This regex now supports multipliers with "x" or "*" and handles optional spacing
     const mainPartMatch = cleanedDef.match(/^(\d*)d(\d+)/);
   
     if (!mainPartMatch) {
