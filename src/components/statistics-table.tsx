@@ -29,6 +29,14 @@ export function StatisticsTable({ results }: StatisticsTableProps) {
     return null;
   }
 
+  const formatMode = (mode: number[]) => {
+    if (!mode || mode.length === 0) return 'N/A';
+    // For uniform distributions (like 1d12), every value is a mode.
+    // Instead of a long list, we can call it uniform.
+    if (mode.length > 2) return 'Uniform';
+    return mode.join(', ');
+  }
+
   return (
     <TooltipProvider>
       <div className="overflow-x-auto rounded-lg border">
@@ -68,7 +76,7 @@ export function StatisticsTable({ results }: StatisticsTableProps) {
                 <TableCell>{result.stats?.max}</TableCell>
                 <TableCell>{result.stats?.mean}</TableCell>
                 <TableCell>{result.stats?.median}</TableCell>
-                <TableCell>{result.stats?.mode.join(', ') || 'N/A'}</TableCell>
+                <TableCell>{formatMode(result.stats?.mode || [])}</TableCell>
                 <TableCell>{result.stats?.stdDev}</TableCell>
                 <TableCell>{result.stats?.p90}</TableCell>
               </TableRow>
