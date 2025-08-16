@@ -74,12 +74,16 @@ export function DistributionChart({ results }: DistributionChartProps) {
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
             tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
+            type="number"
+            domain={['dataMin', 'dataMax']}
+            allowDataOverflow={true}
           />
           <YAxis 
             label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', dy: 40 }} 
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
+            tickFormatter={(value) => `${value.toFixed(2)}`}
           />
           <Tooltip
             contentStyle={{
@@ -88,6 +92,7 @@ export function DistributionChart({ results }: DistributionChartProps) {
               borderRadius: 'var(--radius)',
             }}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
+            formatter={(value: number) => `${value.toFixed(2)}%`}
           />
           <Legend />
           {validResults.map((result) => (

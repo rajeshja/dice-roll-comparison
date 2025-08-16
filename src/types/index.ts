@@ -1,4 +1,5 @@
 
+
 export interface RollStats {
   min: number;
   max: number;
@@ -9,12 +10,23 @@ export interface RollStats {
   p90: number;
 }
 
+export interface DistributionPoint {
+  value: number;
+  count: number;
+  probability: number;
+}
+
+export interface Distribution {
+  stats: RollStats;
+  points: DistributionPoint[];
+}
+
 export interface RollData {
   id: string;
   definition: string;
   color: string;
   stats?: RollStats;
-  distribution?: { value: number; probability: number }[];
+  distribution?: DistributionPoint[];
   error?: string;
 }
 

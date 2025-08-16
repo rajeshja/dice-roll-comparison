@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dices, Plus, Trash2, Loader2, Swords, AlertCircle } from 'lucide-react';
-import { calculateStats, createDistribution, parseRoll, simulateRoll } from '@/lib/dice';
+import { getDistribution, parseRoll } from '@/lib/dice';
 import type { RollData } from '@/types';
 import { StatisticsTable } from './statistics-table';
 import { DistributionChart } from './distribution-chart';
@@ -70,10 +70,8 @@ export function RollComparisonClient() {
         }
         try {
           const parsed = parseRoll(roll.definition);
-          const simulationData = simulateRoll(parsed);
-          const stats = calculateStats(simulationData);
-          const distribution = createDistribution(simulationData);
-          return { ...roll, stats, distribution, error: undefined };
+          const { stats, points } = getDistribution(parsed);
+          return { ...roll, stats, distribution: points, error: undefined };
         } catch (e: any) {
           hasError = true;
           return { ...roll, error: e.message || 'Invalid format', stats: undefined, distribution: undefined };
@@ -97,7 +95,7 @@ export function RollComparisonClient() {
       <Card>
         <CardHeader>
           <CardTitle>Define Your Rolls</CardTitle>
-          <CardDescription>Enter dice roll definitions to compare. Format: 2d6, 1d20+5, 3d8 x2, etc.</CardDescription>
+          <CardDescription>Enter dice roll definitions to compare. Format: 2d6, 1d20+5, 3d8x2, etc.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {rolls.map((roll, index) => (

@@ -1,7 +1,5 @@
 
-import type { RollStats } from '@/types';
-
-const SIMULATIONS = 10000;
+import type { RollStats, Distribution } from '@/types';
 
 export interface ParsedRoll {
   count: number;
@@ -49,82 +47,113 @@ export function parseRoll(definition: string): ParsedRoll {
     return { count, sides, multiplier, bonus };
 }
 
-export function simulateRoll(parsedRoll: ParsedRoll): number[] {
-  const results: number[] = [];
-  for (let i = 0; i < SIMULATIONS; i++) {
-    let sum = 0;
-    for (let j = 0; j < parsedRoll.count; j++) {
-      sum += Math.floor(Math.random() * parsedRoll.sides) + 1;
-    }
-    results.push(sum * parsedRoll.multiplier + parsedRoll.bonus);
-  }
-  return results;
-}
+/**
+ * Calculates the exact distribution of outcomes for a given number of dice and sides.
+ * @returns A Map where keys are the possible sums and values are the number of ways to achieve that sum.
+ */
+function calculateCombinations(count: number, sides: number): Map<number, number> {
+  let distributions = new Map<number, number>();
+  distributions.set(0, 1);
 
-export function calculateStats(data: number[]): RollStats {
-  if (data.length === 0) {
-    return { min: 0, max: 0, mean: 0, median: 0, mode: [], stdDev: 0, p90: 0 };
-  }
-
-  const sortedData = [...data].sort((a, b) => a - b);
-  const sum = data.reduce((acc, val) => acc + val, 0);
-  const mean = sum / data.length;
-
-  const min = sortedData[0];
-  const max = sortedData[sortedData.length - 1];
-
-  const mid = Math.floor(sortedData.length / 2);
-  const median =
-    sortedData.length % 2 !== 0
-      ? sortedData[mid]
-      : (sortedData[mid - 1] + sortedData[mid]) / 2;
-
-  const p90Index = Math.floor(sortedData.length * 0.9);
-  const p90 = sortedData[p90Index];
-
-  const counts = new Map<number, number>();
-  data.forEach((n) => counts.set(n, (counts.get(n) || 0) + 1));
-
-  let maxCount = 0;
-  counts.forEach((count) => {
-    if (count > maxCount) {
-      maxCount = count;
-    }
-  });
-
-  const mode: number[] = [];
-  if (maxCount > 1) { // Only consider a mode if a value repeats
-    for (const [num, count] of counts.entries()) {
-      if (count === maxCount) {
-        mode.push(num);
+  for (let i = 0; i < count; i++) {
+    const newDistributions = new Map<number, number>();
+    for (let d = 1; d <= sides; d++) {
+      for (const [sum, num] of distributions.entries()) {
+        const newSum = sum + d;
+        newDistributions.set(newSum, (newDistributions.get(newSum) || 0) + num);
       }
     }
+    distributions = newDistributions;
+  }
+  return distributions;
+}
+
+
+export function getDistribution(parsedRoll: ParsedRoll): Distribution {
+  const { count, sides, multiplier, bonus } = parsedRoll;
+
+  // Combination limit to prevent performance issues with very large numbers of dice
+  // e.g. 100d1000 has too many combinations to calculate in a reasonable time.
+  if (count * sides > 5000) {
+    throw new Error('Roll is too complex to calculate all outcomes. Please use fewer dice/sides.');
   }
 
-  const variance = data.reduce((acc, val) => acc + (val - mean) ** 2, 0) / data.length;
+  const combinations = calculateCombinations(count, sides);
+
+  const outcomes = new Map<number, number>();
+  let totalCombinations = 0;
+  for (const [sum, num] of combinations.entries()) {
+    const finalValue = sum * multiplier + bonus;
+    outcomes.set(finalValue, (outcomes.get(finalValue) || 0) + num);
+    totalCombinations += num;
+  }
+
+  const distribution = Array.from(outcomes.entries())
+    .map(([value, count]) => ({
+      value,
+      count,
+      probability: parseFloat(((count / totalCombinations) * 100).toFixed(4)),
+    }))
+    .sort((a, b) => a.value - b.value);
+
+  const values = distribution.map(d => d.value);
+  const totalSum = distribution.reduce((acc, d) => acc + d.value * d.count, 0);
+  
+  const mean = totalSum / totalCombinations;
+
+  // Median
+  let cumulativeCount = 0;
+  let median = 0;
+  const medianPoint1 = Math.floor((totalCombinations -1) / 2);
+  const medianPoint2 = Math.ceil((totalCombinations -1) / 2);
+  let medianVal1: number | null = null;
+  let medianVal2: number | null = null;
+  
+  for(const point of distribution) {
+      cumulativeCount += point.count;
+      if (medianVal1 === null && cumulativeCount > medianPoint1) {
+          medianVal1 = point.value;
+      }
+      if (medianVal2 === null && cumulativeCount > medianPoint2) {
+          medianVal2 = point.value;
+      }
+      if(medianVal1 !== null && medianVal2 !== null) break;
+  }
+  median = (medianVal1! + medianVal2!) / 2;
+
+
+  // Mode
+  const maxCount = Math.max(...distribution.map(d => d.count));
+  const mode = distribution.filter(d => d.count === maxCount).map(d => d.value);
+
+  // Std Dev
+  const variance = distribution.reduce((acc, d) => acc + ((d.value - mean) ** 2) * d.count, 0) / totalCombinations;
   const stdDev = Math.sqrt(variance);
 
-  return {
-    min,
-    max,
+  // P90
+  const p90Threshold = totalCombinations * 0.9;
+  let p90 = 0;
+  let cumulativeForP90 = 0;
+  for (const point of distribution) {
+      cumulativeForP90 += point.count;
+      if (cumulativeForP90 >= p90Threshold) {
+          p90 = point.value;
+          break;
+      }
+  }
+
+  const stats: RollStats = {
+    min: Math.min(...values),
+    max: Math.max(...values),
     mean: parseFloat(mean.toFixed(2)),
     median,
-    mode: mode.sort((a, b) => a - b),
+    mode: mode.sort((a,b) => a - b),
     stdDev: parseFloat(stdDev.toFixed(2)),
     p90,
   };
-}
 
-export function createDistribution(
-  data: number[]
-): { value: number; probability: number }[] {
-  const counts = new Map<number, number>();
-  data.forEach((n) => counts.set(n, (counts.get(n) || 0) + 1));
-
-  return Array.from(counts.entries())
-    .map(([value, count]) => ({
-      value,
-      probability: parseFloat(((count / SIMULATIONS) * 100).toFixed(2)),
-    }))
-    .sort((a, b) => a.value - b.value);
+  return {
+    stats,
+    points: distribution
+  };
 }
