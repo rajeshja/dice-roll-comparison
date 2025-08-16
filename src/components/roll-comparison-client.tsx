@@ -12,7 +12,6 @@ import type { RollData } from '@/types';
 import { StatisticsTable } from './statistics-table';
 import { DistributionChart } from './distribution-chart';
 import { useToast } from '@/hooks/use-toast';
-import { RollSuggester } from './roll-suggester';
 import { Separator } from './ui/separator';
 
 const CHART_COLORS = [
@@ -152,10 +151,6 @@ export function RollComparisonClient() {
           </CardContent>
         </Card>
       )}
-
-      <Separator className="my-8" />
-      
-      <RollSuggester />
     </div>
   );
 }
