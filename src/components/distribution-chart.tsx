@@ -24,7 +24,7 @@ export function DistributionChart({ results }: DistributionChartProps) {
   const combinedData: CombinedDistribution = useMemo(() => {
     if (validResults.length === 0) return [];
 
-    const valueMap = new Map<number, { [key: string]: number }>();
+    const valueMap = new Map<number, { value: number; [key: string]: number }>();
     let allValues = new Set<number>();
 
     validResults.forEach(result => {
@@ -69,17 +69,17 @@ export function DistributionChart({ results }: DistributionChartProps) {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis 
-            dataKey="value" 
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+          <XAxis
+            dataKey="value"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
             type="number"
             domain={['dataMin', 'dataMax']}
             allowDataOverflow={true}
           />
-          <YAxis 
-            label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', dy: 40 }} 
+          <YAxis
+            label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', dy: 40 }}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
             axisLine={{ stroke: 'hsl(var(--border))' }}
