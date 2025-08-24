@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  assetPrefix: './',
 };
 
 export default nextConfig;
